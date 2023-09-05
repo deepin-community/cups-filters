@@ -1,7 +1,8 @@
 Source: cups-filters
-Maintainer: Deepin Developer <deepin-dev@deepin.org>
-Uploaders: Deepin Packages Builder <packages@deepin.org>
+Maintainer: Debian Printing Team <debian-printing@lists.debian.org>
+Uploaders:
  Till Kamppeter <till.kamppeter@gmail.com>,
+ Thorsten Alteholz <debian@alteholz.de>,
 Section: net
 Priority: optional
 Build-Depends:
@@ -32,10 +33,11 @@ Build-Depends:
  poppler-utils,
  sharutils,
  zlib1g-dev,
+ libexif-dev,
 Standards-Version: 4.6.0
-#Vcs-Browser
-#Vcs-Git
-Homepage: https://wiki.linuxfoundation.org/openprinting/
+Vcs-Browser: https://salsa.debian.org/printing-team/cups-filters
+Vcs-Git: https://salsa.debian.org/printing-team/cups-filters.git
+Homepage: http://www.openprinting.org/
 Rules-Requires-Root: no
 
 Package: libcupsfilters1
@@ -97,11 +99,13 @@ Depends:
 Recommends:
  colord,
  liblouisutdml-bin | liblouis-bin,
+ ${cf:Recommends},
 Suggests:
  antiword,
  docx2txt,
  foomatic-db-compressed-ppds | foomatic-db,
  imagemagick,
+ ${cf:Suggests},
 Conflicts:
  foomatic-filters,
  foomatic-filters-beh,

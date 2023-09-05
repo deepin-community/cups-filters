@@ -1180,17 +1180,27 @@ cups_array_t* generate_sizes(ipp_t *response,
                            *x_dim, *y_dim;       /* Media dimensions */
   ipp_t                    *media_col,           /* Media collection */
                            *media_size;          /* Media size collection */
-  int                      i, count = 0;
+  int                      i, j, count = 0;
   pwg_media_t              *pwg;                 /* PWG media size */
   int                      left_def, right_def, bottom_def, top_def;
   ipp_attribute_t          *margin;  /* media-xxx-margin attribute */
   const char               *psname;
+  // 2 attributes which hold a list of media-col structures. Paesing is the
+  // same for them, so we use the same code. "media-col-database" is parsed
+  // first as it is more complete an accurate, "media-col-ready" is more
+  // a fallback if there is no "media-col-database".
+  const char * const col_attrs[] =
+  {
+    "media-col-database",
+    "media-col-ready",
+  };
+
 
   if ((attr = ippFindAttribute(response, "media-bottom-margin-supported",
 			       IPP_TAG_INTEGER)) != NULL) {
     for (i = 1, *bottom = ippGetInteger(attr, 0), count = ippGetCount(attr);
 	 i < count; i ++)
-      if (i == 1 || ippGetInteger(attr, i) < *bottom)
+      if (ippGetInteger(attr, i) < *bottom)
         *bottom = ippGetInteger(attr, i);
   } else
     *bottom = 1270;
@@ -1199,7 +1209,7 @@ cups_array_t* generate_sizes(ipp_t *response,
 			       IPP_TAG_INTEGER)) != NULL) {
     for (i = 1, *left = ippGetInteger(attr, 0), count = ippGetCount(attr);
 	 i < count; i ++)
-      if (i == 1 || ippGetInteger(attr, i) < *left)
+      if (ippGetInteger(attr, i) < *left)
         *left = ippGetInteger(attr, i);
   } else
     *left = 635;
@@ -1208,7 +1218,7 @@ cups_array_t* generate_sizes(ipp_t *response,
 			       IPP_TAG_INTEGER)) != NULL) {
     for (i = 1, *right = ippGetInteger(attr, 0), count = ippGetCount(attr);
 	 i < count; i ++)
-      if (i == 1 || ippGetInteger(attr, i) < *right)
+      if (ippGetInteger(attr, i) < *right)
         *right = ippGetInteger(attr, i);
   } else
     *right = 635;
@@ -1217,7 +1227,7 @@ cups_array_t* generate_sizes(ipp_t *response,
 			       IPP_TAG_INTEGER)) != NULL) {
     for (i = 1, *top = ippGetInteger(attr, 0), count = ippGetCount(attr);
 	 i < count; i ++)
-      if (i == 1 || ippGetInteger(attr, i) < *top)
+      if (ippGetInteger(attr, i) < *top)
         *top = ippGetInteger(attr, i);
   } else
     *top = 1270;
@@ -1284,7 +1294,9 @@ cups_array_t* generate_sizes(ipp_t *response,
 			(cups_acopy_func_t)pwg_copy_size,
 			(cups_afree_func_t)free);
 
-  if ((attr = ippFindAttribute(response, "media-col-database",
+  // Go through all attributes which are lists of media-col structures
+  for (j = 0; j < sizeof(col_attrs) / sizeof(col_attrs[0]); j ++)
+  if ((attr = ippFindAttribute(response, col_attrs[j],
 			       IPP_TAG_BEGIN_COLLECTION)) != NULL) {
     for (i = 0, count = ippGetCount(attr); i < count; i ++) {
       cups_size_t temp;   /* Current size */
@@ -2011,7 +2023,7 @@ ppdCreateFromIPP2(char         *buffer,          /* I - Filename buffer */
     }
   }
 #endif
-  if (is_apple == 0 && cupsArrayFind(pdl_list, "image/pwg-raster")) {
+  if (!is_apple && cupsArrayFind(pdl_list, "image/pwg-raster")) {
     if ((attr = ippFindAttribute(response,
 				 "pwg-raster-document-resolution-supported",
 				 IPP_TAG_RESOLUTION)) != NULL) {
@@ -2027,7 +2039,7 @@ ppdCreateFromIPP2(char         *buffer,          /* I - Filename buffer */
     }
   }
 #ifdef QPDF_HAVE_PCLM
-  if (cupsArrayFind(pdl_list, "application/PCLm")) {
+  if (!is_apple && !is_pwg && cupsArrayFind(pdl_list, "application/PCLm")) {
     if ((attr = ippFindAttribute(response, "pclm-source-resolution-supported",
 				 IPP_TAG_RESOLUTION)) != NULL) {
       if ((defattr = ippFindAttribute(response,
@@ -2047,38 +2059,41 @@ ppdCreateFromIPP2(char         *buffer,          /* I - Filename buffer */
     }
   }
 #endif
-  if (cupsArrayFind(pdl_list, "application/vnd.hp-pclxl")) {
-    /* Check whether the gstopxl filter is installed,
-       otherwise ignore the PCL-XL support of the printer */
-    if ((cups_serverbin = getenv("CUPS_SERVERBIN")) == NULL)
-      cups_serverbin = CUPS_SERVERBIN;
-    snprintf(filter_path, sizeof(filter_path), "%s/filter/gstopxl",
-	     cups_serverbin);
-    if (access(filter_path, X_OK) == 0) {
+  /* Legacy formats only if we have no driverless format */
+  if (!is_pdf && !is_apple && !is_pwg && !is_pclm) {
+    if (cupsArrayFind(pdl_list, "application/vnd.hp-pclxl")) {
+      /* Check whether the gstopxl filter is installed,
+	 otherwise ignore the PCL-XL support of the printer */
+      if ((cups_serverbin = getenv("CUPS_SERVERBIN")) == NULL)
+	cups_serverbin = CUPS_SERVERBIN;
+      snprintf(filter_path, sizeof(filter_path), "%s/filter/gstopxl",
+	       cups_serverbin);
+      if (access(filter_path, X_OK) == 0) {
+	/* We put a high cost factor here as if a printer supports also
+	   another format, like PWG or Apple Raster, we prefer it, as some
+	   PCL-XL printers have bugs in their PCL-XL interpreters */
+	cupsFilePrintf(fp, "*cupsFilter2: \"application/vnd.cups-pdf application/vnd.hp-pclxl 400 gstopxl\"\n");
+	if (formatfound == 0) manual_copies = 1;
+	formatfound = 1;
+      }
+    }
+    if (cupsArrayFind(pdl_list, "application/postscript")) {
       /* We put a high cost factor here as if a printer supports also
-	 another format, like PWG or Apple Raster, we prefer it, as some
-	 PCL-XL printers have bugs in their PCL-XL interpreters */
-      cupsFilePrintf(fp, "*cupsFilter2: \"application/vnd.cups-pdf application/vnd.hp-pclxl 400 gstopxl\"\n");
+	 another format, like PWG or Apple Raster, we prefer it, as many
+	 PostScript printers have bugs in their PostScript interpreters */
+      cupsFilePuts(fp, "*cupsFilter2: \"application/vnd.cups-postscript application/postscript 600 -\"\n");
+      if (formatfound == 0) manual_copies = 0;
+      formatfound = 1;
+    }
+    if (cupsArrayFind(pdl_list, "application/vnd.hp-pcl")) {
+      /* We put a high cost factor here as if a printer supports also
+	 another format, like PWG or Apple Raster, we prefer it, as there
+	 are some printers, like HP inkjets which report to accept PCL
+	 but do not support PCL 5c/e or PCL-XL */
+      cupsFilePrintf(fp, "*cupsFilter2: \"application/vnd.cups-raster application/vnd.hp-pcl 800 rastertopclx\"\n");
       if (formatfound == 0) manual_copies = 1;
       formatfound = 1;
     }
-  }
-  if (cupsArrayFind(pdl_list, "application/postscript")) {
-    /* We put a high cost factor here as if a printer supports also
-       another format, like PWG or Apple Raster, we prefer it, as many
-       PostScript printers have bugs in their PostScript interpreters */
-    cupsFilePuts(fp, "*cupsFilter2: \"application/vnd.cups-postscript application/postscript 600 -\"\n");
-    if (formatfound == 0) manual_copies = 0;
-    formatfound = 1;
-  }
-  if (cupsArrayFind(pdl_list, "application/vnd.hp-pcl")) {
-    /* We put a high cost factor here as if a printer supports also
-       another format, like PWG or Apple Raster, we prefer it, as there
-       are some printers, like HP inkjets which report to accept PCL
-       but do not support PCL 5c/e or PCL-XL */
-    cupsFilePrintf(fp, "*cupsFilter2: \"application/vnd.cups-raster application/vnd.hp-pcl 800 rastertopclx\"\n");
-    if (formatfound == 0) manual_copies = 1;
-    formatfound = 1;
   }
   if (cupsArrayFind(pdl_list, "image/jpeg"))
     cupsFilePuts(fp, "*cupsFilter2: \"image/jpeg image/jpeg 0 -\"\n");
@@ -2764,6 +2779,10 @@ ppdCreateFromIPP2(char         *buffer,          /* I - Filename buffer */
  /*
   * ColorModel...
   */
+  if ((defattr = ippFindAttribute(response, "print-color-mode-default",
+				  IPP_TAG_KEYWORD)) == NULL)
+    defattr = ippFindAttribute(response, "output-mode-default",
+			       IPP_TAG_KEYWORD);
 
   if ((attr = ippFindAttribute(response, "urf-supported", IPP_TAG_KEYWORD)) ==
       NULL)
@@ -2781,6 +2800,17 @@ ppdCreateFromIPP2(char         *buffer,          /* I - Filename buffer */
     int first_choice = 1,
       have_bi_level = 0,
       have_mono = 0;
+
+    if ((keyword = ippGetString(defattr, 0, NULL)) != NULL)
+    {
+      if (!strcmp(keyword, "bi-level"))
+        default_color = "FastGray";
+      else if (!strcmp(keyword, "monochrome") ||
+	       !strcmp(keyword, "auto-monochrome"))
+        default_color = "Gray";
+      else
+        default_color = "RGB";
+    }
 
     cupsFilePrintf(fp, "*%% ColorModel from %s\n", ippGetName(attr));
 
@@ -2829,7 +2859,7 @@ ppdCreateFromIPP2(char         *buffer,          /* I - Filename buffer */
 		       (human_readable2 ? human_readable2 :
 			_cupsLangString(lang, _("Grayscale"))));
 
-        if (!default_color || !strcmp(default_color, "FastGray"))
+        if (!default_color || (!defattr && !strcmp(default_color, "FastGray")))
 	  default_color = "Gray";
       } else if (!strcasecmp(keyword, "sgray_16") ||
 		 !strncmp(keyword, "W8-16", 5) ||
@@ -2845,7 +2875,7 @@ ppdCreateFromIPP2(char         *buffer,          /* I - Filename buffer */
         cupsFilePrintf(fp, "*ColorModel Gray16/%s: \"<</cupsColorSpace 18/cupsBitsPerColor 16/cupsColorOrder 0/cupsCompression 0>>setpagedevice\"\n",
 		       _cupsLangString(lang, _("Deep Gray (High Definition Grayscale)")));
 
-        if (!default_color || !strcmp(default_color, "FastGray"))
+	if (!default_color || (!defattr && !strcmp(default_color, "FastGray")))
 	  default_color = "Gray16";
       } else if (!strcasecmp(keyword, "srgb_8") ||
 		 !strncmp(keyword, "SRGB24", 6) ||
@@ -2865,7 +2895,8 @@ ppdCreateFromIPP2(char         *buffer,          /* I - Filename buffer */
 		       (human_readable2 ? human_readable2 :
 			_cupsLangString(lang, _("Color"))));
 
-	default_color = "RGB";
+	if (!defattr)
+	  default_color = "RGB";
       } else if ((!strcasecmp(keyword, "srgb_16") ||
 		  !strncmp(keyword, "SRGB48", 6)) &&
 		 !ippContainsString(attr, "srgb_8")) {
@@ -2884,7 +2915,8 @@ ppdCreateFromIPP2(char         *buffer,          /* I - Filename buffer */
 		       (human_readable2 ? human_readable2 :
 			_cupsLangString(lang, _("Color"))));
 
-	default_color = "RGB";
+        if (!defattr)
+	  default_color = "RGB";
 
 	/* Apparently some printers only advertise color support, so make sure
            we also do grayscale for these printers... */
@@ -3016,7 +3048,7 @@ ppdCreateFromIPP2(char         *buffer,          /* I - Filename buffer */
     if (default_pagesize != NULL) {
       /* Here we are dealing with a cluster, if the default cluster color
          is not supplied we set it Gray*/
-      if (default_cluster_color != NULL) {
+      if (default_cluster_color != NULL && (!default_color || !defattr)) {
 	default_color = default_cluster_color;
       } else
 	default_color = "Gray";
