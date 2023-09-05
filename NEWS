@@ -1,5 +1,147 @@
-NEWS - OpenPrinting CUPS Filters v1.28.10 - 2021-08-17
+NEWS - OpenPrinting CUPS Filters v1.28.17 - 2023-01-24
 ------------------------------------------------------
+
+CHANGES IN V1.28.17
+
+	- libcupsfilters: In PPD generator create only one *cupsFilter2:
+	  line for raster. Only use the most desirable/reliable format,
+	  usually Apple Raster.
+	- libcupsfilters: In get_printer_attributes() poll
+	  "media-col-database" separately if needed. On some printers
+	  one gets "media-col-database" only this way. Ofte reveals
+	  important functionality, like for example borderless
+	  printing.
+	- libcupsfilters: Let PPD generator also parse
+	  "media-col-ready" IPP attribute. "media-col-ready" lists the
+	  loaded media, in contrary to "media-ready" as list of
+	  complete descriptions of the media ("media-col" data
+	  structure).  This often lists also variants like borderless
+	  (it is the same physical paper). Especially usefull when
+	  "media-col-database" is not available.
+	- libcupsfilters: In generate_sizes() consider all margin
+	  alternatives. When generating the PPD file for a driverless
+	  printer, and in the media-{left,right,top,bottom}-margin-supported
+	  printer IPP attributes there was more than 1 vale, the first
+	  value (which often was the 0 for borderless printing was not
+	  considered, leaving the borderless functionality of many
+	  printers undiscovered (Issues #492).
+
+CHANGES IN V1.28.16
+
+	- imagetoraster, imagetopdf, libcupsfilters: Added support for
+	  reading the resolution of an image from its EXIF data when
+	  loading it. This way we get the image reproduced in its
+	  original size with "print-scaling=none" (Issue #362).
+	- libcupsfilters: Replaced deprecated data types uint16 and
+	  uint32. The function to read TIFF image files via libtiff in
+	  cupsfilters/image-tiff.c uses the deprecated types uint16
+	  and uint32. The replacements for these types are uint16_t
+	  and uint32_t.
+
+CHANGES IN V1.28.15
+
+	- pdftops: In pdftops identify old LaserJets more precisely
+	  for working around PostScript interpreter bugs, older
+	  printers need Poppler, newer models need Ghostscript
+	  (Ubuntu bug #1967816).
+
+CHANGES IN V1.28.14
+
+	- pdftopdf: Correct the output when suppressing auto-rotation
+	  (option "nopdfAutoRotate"). Depending on the situation pages
+	  got cropped in the wrong orientation or de-centered.
+	- pdftopdf: Correct the output when the
+	  "orientation-requested" or the "landscape" option is
+	  supplied. Output could be de-centered (Issue #456),
+	  portrait-oriented pages be wrongly cropped and division of
+	  the output page into cells for N-up done in the wrong
+	  orientation.
+	- rastertopdf: In PCLm output mode the filter failed to
+	  generate PCLm if the printer has no
+	  "pclm-source-resolution-default" IPP attribute.
+
+CHANGES IN V1.28.13
+
+	- pdftopdf: Fix N-up printing when paper is taken
+	  long-edge-first by the printer.
+	- pdftopdf: Fix cropping ("print-scaling=none" and
+	  "print-scaling=fill") when paper is taken long-edge-first by
+	  the printer (Issue #454).
+	- pdftops: Use Poppler for all Apple LaserWriter models (Issue
+	  #452).
+
+CHANGES IN V1.28.12
+
+	- imagetoraster, imagetopdf: Fixed comparison of the image
+	  size with the page size for print-scaling=auto. The image
+	  size in pixels was compared with the page size in PostScript
+	  points (1/72 inch).
+	- imagetoraster, imagetopdf: Fixed the "print-scaling=none"
+  	  (crop-to-fit) mode, also use crop-to-fit always when
+  	  requested, do not fall back to fit-to-page when the image
+  	  size differs significantly from the page size (Issue #362).
+	- libcupsfilters: Changed the default PPI resolution for
+	  images as input files from 128 to 200 (Pull request #446).
+	- implicitclass: Do not check availability of "gs" and
+	  "pdftops" executables, instead, check by the presence of
+	  "gstoraster" and "pdftoraster" filters whether we have
+	  configured cups-filters for Ghostscript and/or Poppler use.
+	- libcupsfilters: In the PPD generator for the driverless
+	  utility and cups-browsed add "*cupsFilter2: ..." lines for
+	  all supported driverless data formats (PDF, Apple/PWG
+	  Raster, PCLm), and add lines for legacy data formats (PCL,
+	  PostScript) only if no driverless formats available.
+	- libcupsfilters: Always use encryption for ipps. RFC7472
+	  requires that 'ipps' must be used over HTTPS, but the
+	  driverless utility does not enforce encryption (Pull request
+	  #433).
+	- serial: Add a 10-msec sleep and at the end add a tcdrain().
+	  For some unknown reason, every printing file need sleep a
+	  little time to make sure the serial printer receive data is
+	  right (Pull request #431).
+	- libcupsfilters: Fix resolver functions for DNS-SD-based
+	  URIs, to make resolve_uri() also work when DEVICE_URI env
+	  variable is set and to make ippfind_based_uri_converter()
+	  not re-direct stdin.
+	- pdftopdf: Set default for print-scaling to avoid "should
+	  never happem" log messages and undefined behavior.
+	- pdftopdf: Fix orientation-requested = 0. Consider
+	  this as "automatic selection and not as error.
+	- pdftopdf: Fixed all combinations of print-scaling and
+	  number-up for printers with asymmetric margins (top !=
+	  bottom or left != right) and for input files containing
+	  pages with different sizes and/or orientations. Fixes
+	  backported from 2.x branch.
+	- pdftopdf: Add 2% tolerance for input size larger than output
+	  page when "print-scaling=auto" or "print-scaling=auto-fit"
+	  is used and too large input pages should be scaled, fitting
+	  documents not. This prevents a random-looking behavior if
+	  input and output page size seem to be equal, but in reality
+	  there are slight differences between size dimensions.
+
+CHANGES IN V1.28.11
+
+	- libcupsfilters: Let PPD generator take default ColorModel
+	  from printer (CUPS issue #277).
+	- Braille: In vectortopdf check inkscape version to call
+	  inkscape with the correct command line (Issue #315, Pull
+	  request #443).
+	- Build system: Make missing DejaVuSans.ttf non-fatal in
+	  ./configure as the font is only needed for test programs,
+	  not for actual use of cups-filters (Issue #411).
+	- libcupsfilters: In imagetoraster() fixed crash with SGray
+          (Issue #435).
+	- cups-browsed: Naming of local queues is matched to CUPS'
+	  current naming of temporary queues (no leading or trailing
+	  underscores), to avoid duplicates in print dialogs which
+	  support CUPS' temporary queues.
+	- libcupsfilters: Make cupsRasterParseIPPOptions() work correctly
+	  with PPDs (Issue #436).
+	- libcupsfilters: Let colord_get_profile_for_device_id() not
+	  return empty file name, to avoid error messages in CUPS
+	  error_log.
+	- foomatic-rip: Debug message was wrongly sent to stdout and
+	  not to log (Issue #422).
 
 CHANGES IN V1.28.10
 
