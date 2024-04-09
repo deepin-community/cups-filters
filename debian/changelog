@@ -1,3 +1,9 @@
+cups-filters (1.28.17-3deepin1) unstable; urgency=medium
+
+  * Fix deepin print test page
+
+ -- xiangzelong <xiangzelong@deepin.org>  Tue, 09 Apr 2024 11:00:56 +0800
+
 cups-filters (1.28.17-3deepin) unstable; urgency=medium
 
   * update debian/rules for deepin

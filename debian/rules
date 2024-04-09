@@ -2,8 +2,10 @@
 
 include /usr/share/dpkg/architecture.mk
 
-derives_from_ubuntu := $(shell (dpkg-vendor --derives-from Ubuntu && echo "yes") || echo "no")
-derives_from_deepin := $(shell (dpkg-vendor --derives-from Deepin && echo "yes") || echo "no")
+derives_from_ubuntu := $(shell (grep -qi 'ubuntu'  /usr/lib/os-release && echo "yes") || echo "no")
+derives_from_deepin := $(shell (grep -qi 'deepin'  /usr/lib/os-release && echo "yes") || echo "no")
+derives_from_uos    := $(shell (grep -qi 'uos'     /usr/lib/os-release && echo "yes") || echo "no")
+
 
 export DEB_BUILD_MAINT_OPTIONS = hardening=+all
 
@@ -49,6 +51,9 @@ ifeq ($(derives_from_ubuntu),yes)
 else ifeq ($(derives_from_deepin),yes)
 	mkdir -p debian/cups-filters/usr/share/cups/data/
 	install -D -m 644 debian/local/default-testpage-deepin.pdf debian/cups-filters/usr/share/cups/data/default-testpage.pdf
+else ifeq ($(derives_from_uos),yes)
+	mkdir -p debian/cups-filters/usr/share/cups/data/
+	install -D -m 644 debian/local/default-testpage.pdf debian/cups-filters/usr/share/cups/data/default-testpage.pdf
 else
 	mkdir -p debian/cups-filters/usr/share/cups/data/
 	#rsvg-convert debian/local/default-testpage-debian.svg -f pdf > debian/cups-filters/usr/share/cups/data/default-testpage.pdf
