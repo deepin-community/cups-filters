@@ -160,4 +160,4 @@ libcupsfilters.so.1 libcupsfilters1 #MINVER#
  sgiPutRow@Base 1.0~b1
  sgray_gamma@Base 1.0.58
  sgray_wp@Base 1.0.58
- strlcpy@Base 1.12.0
+ strlcpy@Base 1.28.17-3.1~deepin1

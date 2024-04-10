@@ -1,3 +1,10 @@
+cups-filters (1.28.17-3.1~deepin1) unstable; urgency=medium
+
+  * Not t64
+  * Update changelog
+
+ -- xiangzelong <xiangzelong@deepin.org>  Wed, 10 Apr 2024 10:56:23 +0800
+
 cups-filters (1.28.17-3deepin1) unstable; urgency=medium
 
   * Fix deepin print test page
