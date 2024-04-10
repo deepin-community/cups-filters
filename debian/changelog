@@ -1,19 +1,13 @@
-cups-filters (1.28.17-3deepin1) unstable; urgency=medium
+cups-filters (1.28.17-3.1) unstable; urgency=medium
 
-  * Fix deepin print test page
+  * Non-maintainer upload.
+  * Rename libraries for 64-bit time_t transition.  Closes: #1061915
 
- -- xiangzelong <xiangzelong@deepin.org>  Tue, 09 Apr 2024 11:00:56 +0800
-
-cups-filters (1.28.17-3deepin) unstable; urgency=medium
-
-  * update debian/rules for deepin
-  * add default-testpage.pdf to debian/local
-
- -- bluesky <chenchongbiao@deepin.org>  Tue, 05 Sep 2023 17:35:01 +0800
+ -- Michael Hudson-Doyle <mwhudson@debian.org>  Tue, 27 Feb 2024 23:14:13 +0000
 
 cups-filters (1.28.17-3) unstable; urgency=medium
 
-  * CVE-2023-24805
+  * CVE-2023-24805 
     prevent arbitrary command execution by escaping the quoting
     of the arguments in a job with a forged job title
     more information are available in the commit message at:

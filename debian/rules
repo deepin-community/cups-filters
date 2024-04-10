@@ -2,10 +2,13 @@
 
 include /usr/share/dpkg/architecture.mk
 
-derives_from_ubuntu := $(shell (grep -qi 'ubuntu'  /usr/lib/os-release && echo "yes") || echo "no")
-derives_from_deepin := $(shell (grep -qi 'deepin'  /usr/lib/os-release && echo "yes") || echo "no")
-derives_from_uos    := $(shell (grep -qi 'uos'     /usr/lib/os-release && echo "yes") || echo "no")
-
+derives_from_ubuntu := $(shell (dpkg-vendor --derives-from Ubuntu && echo "yes") || echo "no")
+# Some cups-filters packages are in Ubuntu universe so only suggest them in dh_gencontrol
+ifeq ($(derives_from_ubuntu),yes)
+	SUBSTVARS = -Vcf:Suggests="lynx"
+else
+	SUBSTVARS = -Vcf:Recommends="lynx"
+endif
 
 export DEB_BUILD_MAINT_OPTIONS = hardening=+all
 
@@ -48,16 +51,9 @@ ifeq ($(derives_from_ubuntu),yes)
 	#  - Replace standard test page template by Ubuntu-branded one
 	install -D -m 644 debian/local/apport-hook.py debian/cups-filters/usr/share/apport/package-hooks/source_cups-filters.py
 	install -D -m 644 debian/local/default-testpage-ubuntu.pdf debian/cups-filters/usr/share/cups/data/default-testpage.pdf
-else ifeq ($(derives_from_deepin),yes)
-	mkdir -p debian/cups-filters/usr/share/cups/data/
-	install -D -m 644 debian/local/default-testpage-deepin.pdf debian/cups-filters/usr/share/cups/data/default-testpage.pdf
-else ifeq ($(derives_from_uos),yes)
-	mkdir -p debian/cups-filters/usr/share/cups/data/
-	install -D -m 644 debian/local/default-testpage.pdf debian/cups-filters/usr/share/cups/data/default-testpage.pdf
 else
 	mkdir -p debian/cups-filters/usr/share/cups/data/
-	#rsvg-convert debian/local/default-testpage-debian.svg -f pdf > debian/cups-filters/usr/share/cups/data/default-testpage.pdf
-	install -D -m 644 debian/local/default-testpage.pdf debian/cups-filters/usr/share/cups/data/default-testpage.pdf
+	rsvg-convert debian/local/default-testpage-debian.svg -f pdf > debian/cups-filters/usr/share/cups/data/default-testpage.pdf
 endif
 
 # Known not-present: m68k hurd-i386 kfreebsd-{amd64,i386}
@@ -67,6 +63,10 @@ ifneq ($(filter $(DEB_HOST_ARCH),amd64 i386 mips64el mipsel alpha hppa ia64 spar
 endif
 
 	dh_apparmor -pcups-browsed --profile-name=usr.sbin.cups-browsed
+
+# Some cups-filters packages are in Ubuntu universe so only suggest them there
+override_dh_gencontrol:
+	dh_gencontrol -- $(SUBSTVARS)
 
 get-orig-source:
 	set -ex; \

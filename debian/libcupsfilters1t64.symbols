@@ -1,4 +1,4 @@
-libcupsfilters.so.1 libcupsfilters1 #MINVER#
+libcupsfilters.so.1 libcupsfilters1t64 #MINVER#
 * Build-Depends-Package: libcupsfilters-dev
  _CFcupsSetError@Base 1.13.5
  _cupsImagePutCol@Base 1.0~b1
