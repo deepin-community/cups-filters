@@ -1,3 +1,10 @@
+cups-filters (1.28.17-3.1~deepin3) unstable; urgency=medium
+
+  * Fix CVE-2024-47076.
+  * Fix CVE-2024-47176.
+
+ -- xiangzelong <xiangzelong@deepin.org>  Fri, 27 Sep 2024 10:42:03 +0800
+
 cups-filters (1.28.17-3.1~deepin2) unstable; urgency=medium
 
   * Update symbols.
