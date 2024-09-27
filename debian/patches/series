@@ -1,3 +1,5 @@
 0001-Force-set-INITDIR-in-configure.ac-instead-of-relying.patch
 0002-qpdf-needs-at-least-c-17.patch
 0003-fix-CVE-2023-24805.patch
+0004-fix-CVE-2024-47076.patch
+0005-fix-CVE-2024-47176.patch
