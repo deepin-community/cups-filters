@@ -1,3 +1,9 @@
+cups-filters (1.28.17-3.1~deepin4) unstable; urgency=medium
+
+  * fix CVE-2025-57812 CVE-2025-64503 CVE-2025-64524 
+
+ -- zengwei <zengwei1@uniontech.com>  Wed, 24 Dec 2025 16:00:14 +0800
+
 cups-filters (1.28.17-3.1~deepin3) unstable; urgency=medium
 
   * Fix CVE-2024-47076.
