@@ -1,0 +1,8 @@
+#!/bin/sh
+# Clean up kernel hook after cups-filters package is purged.
+# On upgrade/remove the conffile hooks in /etc/kernel/*.d are removed by dpkg.
+# On purge we ensure orphaned copies are gone.
+set -e
+rm -f /etc/kernel/postinst.d/zz-cups-filters
+rm -f /etc/kernel/postrm.d/zz-cups-filters
+exit 0

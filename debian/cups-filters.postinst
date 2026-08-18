@@ -1,0 +1,6 @@
+#!/bin/bash
+set -e
+
+[ -x /usr/lib/cups-filters/modules-check.sh ] && /usr/lib/cups-filters/modules-check.sh
+
+#DEBHELPER#
