@@ -1,3 +1,9 @@
+cups-filters (1.28.17-3.1~deepin5) unstable; urgency=medium
+
+  * config lp/ppdev/parport_pc modules
+
+ -- LIU Li <liuli@uniontech.com>  Tue, 18 Aug 2026 21:06:00 +0800
+
 cups-filters (1.28.17-3.1~deepin4) unstable; urgency=medium
 
   * fix CVE-2025-57812 CVE-2025-64503 CVE-2025-64524 

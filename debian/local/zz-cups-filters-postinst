@@ -1,0 +1,9 @@
+#!/bin/sh
+# Re-calibrate parallel-port module loading after a kernel is installed or
+# upgraded. Invoked by kernel packages via run-parts:
+#   $1 = kernel version, $2 = vmlinuz path (unused -- we full-scan
+#   /lib/modules, so the just-installed kernel is covered automatically).
+set -e
+[ -x /usr/lib/cups-filters/modules-check.sh ] || exit 0
+/usr/lib/cups-filters/modules-check.sh
+exit 0

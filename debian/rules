@@ -60,10 +60,17 @@ else
 	install -D -m 644 debian/local/default-testpage.pdf debian/cups-filters/usr/share/cups/data/default-testpage.pdf
 endif
 
-# Known not-present: m68k hurd-i386 kfreebsd-{amd64,i386}
-ifneq ($(filter $(DEB_HOST_ARCH),amd64 i386 mips64el mipsel alpha hppa ia64 sparc64),)
-	# Install the modules loader for lp, ppdev and parport_pc, only on allow-listed architectures where these are known-present
+# Install the modules loader for lp, ppdev and parport_pc only on architectures
+# where parallel-port hardware (and thus these kernel modules) are known to exist.
+# Parallel ports are legacy PC/ISA hardware; they do not exist on arm64, ppc64el,
+# s390x, riscv64, loong64, or other modern architectures.
+ifneq ($(filter $(DEB_HOST_ARCH),amd64 i386 mips64el),)
 	install -D -m 644 debian/local/modules-load.conf debian/cups-filters/etc/modules-load.d/cups-filters.conf
+	# Shared logic for cups-filters.postinst + /etc/kernel/{postinst,postrm}.d
+	# hooks: re-scan installed kernels and calibrate the modules-load conf.
+	install -D -m 755 debian/local/modules-check.sh    debian/cups-filters/usr/lib/cups-filters/modules-check.sh
+	install -D -m 755 debian/local/zz-cups-filters-postinst debian/cups-filters/etc/kernel/postinst.d/zz-cups-filters
+	install -D -m 755 debian/local/zz-cups-filters-postrm    debian/cups-filters/etc/kernel/postrm.d/zz-cups-filters
 endif
 
 	dh_apparmor -pcups-browsed --profile-name=usr.sbin.cups-browsed
