@@ -1,3 +1,9 @@
+cups-filters (1.28.17-3.1~deepin6) unstable; urgency=medium
+
+  * Rebuild with LTO enabled (dpkg vendor feature optimize/lto).
+
+ -- tunaichao <tunaichao@uniontech.com>  Fri, 11 Sep 2026 10:08:13 +0800
+
 cups-filters (1.28.17-3.1~deepin5) unstable; urgency=medium
 
   * config lp/ppdev/parport_pc modules
